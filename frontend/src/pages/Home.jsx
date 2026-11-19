@@ -1,110 +1,72 @@
-import { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom';
-import axios from 'axios';
-import '../App.css';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { api, errorMessage } from '../lib/api';
+import ProductCard from '../components/ProductCard';
 
-function Home() {
+export default function Home() {
   const [products, setProducts] = useState([]);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedCategory, setSelectedCategory] = useState('');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [search, setSearch] = useState('');
+  const [category, setCategory] = useState('');
+  const productsRef = useRef(null);
 
   useEffect(() => {
-    fetchProducts();
+    api.get('/products')
+      .then((r) => setProducts(r.data))
+      .catch((e) => setError(errorMessage(e)))
+      .finally(() => setLoading(false));
   }, []);
 
-  const fetchProducts = async () => {
-    try {
-      const response = await axios.get('/api/products');
-      setProducts(response.data);
-    } catch (error) {
-      console.error('خطأ في جلب المنتجات:', error);
-    }
-  };
-
-  const categories = [...new Set(products.map((p) => p.category))];
-
-  const filteredProducts = products
-    .filter((product) =>
-      product.name.toLowerCase().includes(searchTerm.toLowerCase())
-    )
-    .filter((product) =>
-      selectedCategory ? product.category === selectedCategory : true
-    );
-
-  const scrollToProducts = () => {
-    document.querySelector('.products-section').scrollIntoView({ behavior: 'smooth' });
-  };
+  const categories = useMemo(() => [...new Set(products.map((p) => p.category))], [products]);
+  const filtered = products
+    .filter((p) => p.name.toLowerCase().includes(search.toLowerCase()))
+    .filter((p) => (category ? p.category === category : true));
 
   return (
-    <div className="home">
-      <div className="hero">
-        <img src="/home.png" alt="Superette Faiza" className="hero-image" />
-        <div className="hero-overlay">
-          <h1 className="hero-title">مرحبًا بكم في سوبارات فايزة</h1>
-          <p className="hero-tagline">تسوق أفضل المنتجات بأسعار تنافسية!</p>
-          <button onClick={scrollToProducts} className="hero-button">تسوق الآن</button>
+    <div>
+      <section className="relative -mt-[70px] h-screen overflow-hidden">
+        <img src="/home.png" alt="" className="h-full w-full object-cover brightness-70" />
+        <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-white">
+          <h1 className="text-4xl font-extrabold drop-shadow-lg md:text-6xl">مرحبًا بكم في سوبريت فايزة</h1>
+          <p className="mt-3 text-xl drop-shadow md:text-2xl">تسوق أفضل المنتجات بأسعار تنافسية!</p>
+          <button
+            onClick={() => productsRef.current.scrollIntoView({ behavior: 'smooth' })}
+            className="btn-primary mt-6 rounded-full px-8 py-3 text-lg"
+          >
+            تسوق الآن
+          </button>
         </div>
-      </div>
-      <div className="welcome-section">
-        <h2>اكتشف تشكيلتنا الواسعة</h2>
-        <p>منتجات عالية الجودة تناسب جميع احتياجاتك اليومية</p>
-      </div>
-      <div className="products-section">
-        <h1 className="products-title">المنتجات</h1>
-        <div className="filters">
-          <div className="search-wrapper">
-            <input
-              type="text"
-              placeholder="ابحث باسم المنتج"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="search-bar"
-            />
-            <span className="search-icon">🔍</span>
+      </section>
+
+      <section className="mx-4 my-6 rounded-2xl bg-linear-to-br from-stone-100 to-stone-200 px-5 py-10 text-center shadow">
+        <h2 className="text-3xl font-bold">اكتشف تشكيلتنا الواسعة</h2>
+        <p className="mt-2 text-lg text-stone-600">منتجات عالية الجودة تناسب جميع احتياجاتك اليومية</p>
+      </section>
+
+      <section ref={productsRef} className="mx-auto max-w-6xl scroll-mt-20 px-4 py-10">
+        <h2 className="mb-8 border-y-4 border-brand-500 py-3 text-center text-4xl font-extrabold">المنتجات</h2>
+
+        <div className="mb-8 flex flex-wrap justify-center gap-3">
+          <div className="relative w-64">
+            <input className="input pe-10" placeholder="ابحث باسم المنتج" value={search} onChange={(e) => setSearch(e.target.value)} />
+            <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2">🔍</span>
           </div>
-          <div className="category-wrapper">
-            <select
-              value={selectedCategory}
-              onChange={(e) => setSelectedCategory(e.target.value)}
-              className="category-filter"
-            >
-              <option value="">جميع الأصناف</option>
-              {categories.map((cat) => (
-                <option key={cat} value={cat}>{cat}</option>
-              ))}
-            </select>
-          </div>
+          <select className="input w-52" value={category} onChange={(e) => setCategory(e.target.value)}>
+            <option value="">جميع الأصناف</option>
+            {categories.map((c) => <option key={c}>{c}</option>)}
+          </select>
         </div>
-        <div className="product-grid">
-          {filteredProducts.map((product, index) => (
-            <Link
-              to={`/product/${product._id}`}
-              key={product._id}
-              className="product-link"
-              style={{ animationDelay: `${index * 0.1}s` }}
-            >
-              <div className="product-card">
-                <img src={product.image} alt={product.name} className="product-image" />
-                <div className="product-info">
-                <h5 style={{ color: 'gray', fontStyle: 'italic' }}>{product.company}</h5>
-                  <h3>{product.name}</h3>
-                  <p>{product.sellingPrice} د.ت</p>
-                  <h5 style={{ color: 'gray' }}>{product.category}</h5>
-                  {product.stock < 10 && (
-                    <span className="low-stock-badge">كمية منخفضة</span>
-                  )}
-                </div>
-              </div>
-            </Link>
-          ))}
+
+        {loading && <p className="text-center text-stone-500">جاري التحميل...</p>}
+        {error && <p role="alert" className="text-center text-red-600">{error}</p>}
+        {!loading && !error && filtered.length === 0 && (
+          <p className="text-center text-stone-500">لا توجد منتجات مطابقة.</p>
+        )}
+
+        <div className="grid grid-cols-[repeat(auto-fill,minmax(240px,1fr))] gap-5">
+          {filtered.map((p) => <ProductCard key={p.id} product={p} />)}
         </div>
-      </div>
-      <footer className="footer">
-        <p>سوبريت فايزة - جميع الحقوق محفوظة © 2025</p>
-        <p>تواصلوا معنا: contact@superettefaiza.com</p>
-      </footer>
+      </section>
     </div>
   );
 }
-
-export default Home;

@@ -1,23 +1,17 @@
 {
-  "name": "superette-feyza",
-  "version": "1.0.0",
-  "main": "index.js",
+  "name": "superette-faiza",
+  "version": "2.0.0",
+  "private": true,
+  "description": "Superette Faiza - grocery catalog & admin (ASP.NET Core + React + Tailwind)",
   "scripts": {
-    "start:backend": "node backend/server.js",
-    "start:frontend": "cd frontend && npm run dev",
-    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "install:all": "npm install && npm --prefix frontend install",
+    "start:backend": "dotnet watch run --project backend/Superette.Api --urls http://localhost:5000",
+    "start:frontend": "npm --prefix frontend run dev",
+    "start": "concurrently -n api,web -c green,cyan \"npm run start:backend\" \"npm run start:frontend\"",
+    "build": "npm --prefix frontend run build && dotnet build backend/Superette.Api -c Release",
+    "docker:build": "docker build -t superette-faiza ."
   },
-  "keywords": [],
-  "author": "",
   "license": "ISC",
-  "description": "",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^16.4.7",
-    "express": "^4.21.2",
-    "mongoose": "^8.12.1"
-  },
   "devDependencies": {
     "concurrently": "^9.1.2"
   }

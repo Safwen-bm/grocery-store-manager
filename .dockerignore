@@ -1,0 +1,9 @@
+**/node_modules
+**/bin
+**/obj
+frontend/dist
+.git
+.github
+.env
+.env.*
+*.md

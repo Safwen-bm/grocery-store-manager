@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import tailwindcss from '@tailwindcss/vite';
 
 export default defineConfig({
-  plugins: [react()],
+  plugins: [react(), tailwindcss()],
   server: {
     proxy: {
-      '/api': 'http://localhost:5000', // Forward /api requests to backend
+      // Same-origin in dev too, so the HttpOnly auth cookie just works
+      '/api': 'http://localhost:5000',
     },
   },
 });

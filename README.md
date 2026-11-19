@@ -1,68 +1,50 @@
 # Superette Faiza 🛒
 
-A simple grocery store inventory & catalog web app. Backend built with Express + MongoDB (Mongoose), frontend built with React + Vite. Includes product browsing with search/category filters, and an admin-style product management interface (add/edit/delete, auto-calculated selling price from cost + profit margin, expiry date tracking, low-stock indicator).
+Grocery catalog & admin app.
 
-## Tech Stack
+- **Backend:** ASP.NET Core (.NET 10, Minimal APIs) + MongoDB Atlas
+- **Frontend:** React 19 + Vite + Tailwind CSS v4 (RTL / Arabic)
+- **Auth:** server-side admin accounts, HttpOnly cookie, login rate-limiting
 
-- **Backend:** Node.js, Express, MongoDB, Mongoose
-- **Frontend:** React 19, Vite, React Router, Axios
+## Structure
 
-## Project Structure
+```
+backend/Superette.Api/   Program.cs, Endpoints/, Models/, Data/
+frontend/                React app (src/pages, src/components, src/lib)
+Dockerfile               one image = API + built website
+.github/workflows/ci.yml build + lint on every push / PR
+```
 
-superette-faiza/
-├── backend/
-│ ├── models/
-│ │ └── Product.js
-│ ├── routes/
-│ │ └── products.js
-│ └── server.js
-├── frontend/
-│ └── src/
-│ └── pages/
-│ ├── Home.jsx
-│ ├── Products.jsx
-│ ├── ProductDetails.jsx
-│ └── ManageProducts.jsx
-├── package.json
-└── .env.example
-
-
-## Setup
-
-1. Clone the repo and install dependencies:
+## Local setup
 
 ```bash
-   npm install
-   cd frontend && npm install && cd ..
+npm run install:all
+
+# Secrets stay on your machine (not in the repo):
+cd backend/Superette.Api
+dotnet user-secrets set "Mongo:ConnectionString" "mongodb+srv://USER:PASS@CLUSTER.mongodb.net/?retryWrites=true&w=majority"
+dotnet user-secrets set "Admin:Username" "admin"
+dotnet user-secrets set "Admin:Password" "a-long-password-min-10-chars"
+cd ../..
+
+npm start        # API: http://localhost:5000  |  Web: http://localhost:5173
 ```
 
-2. Copy `.env.example` to `.env` in the project root and fill in your own MongoDB connection string:
+The first admin is created from `Admin:*` only when the `users` collection is empty.
+
+## Security notes
+
+- Public API (`/api/products`) never returns cost price or margin; `/api/admin/*` requires login.
+- Selling price is computed on the server.
+- Cookie: HttpOnly, SameSite=Strict, Secure in production. Login limited to 5 tries/min/IP.
+- CSP + security headers on every response.
+
+## Docker
 
 ```bash
-   cp .env.example .env
+docker build -t superette-faiza .
+docker run -p 8080:8080 --env-file .env superette-faiza
 ```
-
-```dotenv
-   MONGO_URI=your_mongodb_connection_string_here
-   PORT=5000
-```
-
-3. Run both backend and frontend together from the project root:
-
-```bash
-   npm start
-```
-
-   - Backend runs on `http://localhost:5000`
-   - Frontend (Vite) runs on `http://localhost:5173`
-
-## Features
-
-- Browse products with live search and category filtering
-- Product detail pages
-- Add/edit/delete products (image upload via base64, auto-calculated selling price)
-- Low-stock visual warning
-- Expiry date tracking
 
 ## License
 

@@ -1,45 +1,46 @@
-import { useState } from 'react';
-import { BrowserRouter as Router, Route, Routes } from 'react-router-dom';
-
+import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
+import Footer from './components/Footer';
 import Home from './pages/Home';
-import ManageProducts from './pages/ManageProducts';
-import Products from './pages/Products';
-import ProductDetails from './pages/ProductDetails'; 
+import ProductDetails from './pages/ProductDetails';
 import Login from './pages/Login';
+import AdminProducts from './pages/admin/AdminProducts';
 
-import './App.css';
-
-function App() {
-  const [isLoggedIn, setIsLoggedIn] = useState(localStorage.getItem('isLoggedIn') === 'true');
-
-  const handleLogout = () => {
-    setIsLoggedIn(false);
-    localStorage.removeItem('isLoggedIn');
-  };
-
-  if (!isLoggedIn) {
-    return <Login onLogin={() => {
-      setIsLoggedIn(true);
-      localStorage.setItem('isLoggedIn', 'true');
-    }} />;
-  }
-
+function Layout() {
   return (
-    <Router>
-      <div className="App">
-        <Navbar onLogout={handleLogout} />
-        <div className="main-content">
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/manage-products" element={<ManageProducts />} />
-            <Route path="/products" element={<Products />} />
-            <Route path="/product/:id" element={<ProductDetails />} /> {/* New route */}
-          </Routes>
-        </div>
-      </div>
-    </Router>
+    <div className="flex min-h-screen flex-col">
+      <Navbar />
+      <main className="flex-1 pt-[70px]"><Outlet /></main>
+      <Footer />
+    </div>
   );
 }
 
-export default App;
+function RequireAdmin() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  if (loading) return <p className="p-10 text-center text-stone-500">جاري التحميل...</p>;
+  if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  return <Outlet />;
+}
+
+export default function App() {
+  return (
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route element={<Layout />}>
+            <Route path="/" element={<Home />} />
+            <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/login" element={<Login />} />
+            <Route element={<RequireAdmin />}>
+              <Route path="/admin/products" element={<AdminProducts />} />
+            </Route>
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Route>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
+  );
+}
