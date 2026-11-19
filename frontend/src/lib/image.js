@@ -1,5 +1,5 @@
-// Resize + compress in the browser so we never store multi-MB base64 strings.
-export function fileToDataUrl(file, maxSize = 800, quality = 0.8) {
+// Resize + compress in the browser BEFORE uploading to Cloudinary (faster, cheaper).
+export function compressImage(file, maxSize = 1000, quality = 0.82) {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
     const img = new Image();
@@ -10,7 +10,7 @@ export function fileToDataUrl(file, maxSize = 800, quality = 0.8) {
       canvas.height = Math.round(img.height * scale);
       canvas.getContext('2d').drawImage(img, 0, 0, canvas.width, canvas.height);
       URL.revokeObjectURL(url);
-      resolve(canvas.toDataURL('image/jpeg', quality));
+      canvas.toBlob((b) => (b ? resolve(b) : reject(new Error('تعذر معالجة الصورة'))), 'image/jpeg', quality);
     };
     img.onerror = () => {
       URL.revokeObjectURL(url);
@@ -18,4 +18,10 @@ export function fileToDataUrl(file, maxSize = 800, quality = 0.8) {
     };
     img.src = url;
   });
+}
+
+// Cloudinary delivery URL with automatic format/quality and a max width.
+export function thumb(url, width = 500) {
+  if (!url || !url.includes('/upload/')) return url;
+  return url.replace('/upload/', `/upload/w_${width},c_limit,q_auto,f_auto/`);
 }

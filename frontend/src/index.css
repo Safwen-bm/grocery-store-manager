@@ -1,14 +1,43 @@
 @import "tailwindcss";
 
+/* Dark mode = a "dark" class on <html> (toggled from the navbar) */
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: "Tajawal", ui-sans-serif, system-ui, sans-serif;
-  --color-brand-50: #f1f9f2;
-  --color-brand-100: #dcf0de;
-  --color-brand-200: #b9e0bd;
-  --color-brand-500: #4caf50;
-  --color-brand-600: #3d9142;
-  --color-brand-700: #327537;
-  --color-brand-900: #1b3f1e;
+
+  /* Faiza identity: deep market green + saffron */
+  --color-brand-50: #eef8f1;
+  --color-brand-100: #d6efdd;
+  --color-brand-200: #b0dfbd;
+  --color-brand-500: #2e9e5b;
+  --color-brand-600: #218049;
+  --color-brand-700: #1a653a;
+  --color-brand-900: #0f3a22;
+  --color-accent-400: #f7a540;
+  --color-accent-500: #f08a1c;
+  --color-accent-600: #d4720a;
+
+  --color-surface: #ffffff;
+}
+
+/* Dark mode: flip the neutral scale + brand tints, every page follows automatically */
+.dark {
+  --color-surface: #1b1f1c;
+  --color-stone-50: #121513;
+  --color-stone-100: #1b1f1c;
+  --color-stone-200: #2a2f2b;
+  --color-stone-300: #3b413c;
+  --color-stone-400: #6f766f;
+  --color-stone-500: #939a93;
+  --color-stone-600: #adb3ad;
+  --color-stone-700: #c9cec9;
+  --color-stone-800: #e8ebe8;
+  --color-brand-50: #16301f;
+  --color-brand-100: #1d3f28;
+  --color-brand-600: #27a05a;
+  --color-brand-700: #34b96b;
+  color-scheme: dark;
 }
 
 @layer base {
@@ -23,11 +52,13 @@
 
 @layer components {
   .input {
-    @apply w-full rounded-lg border border-stone-300 bg-white px-3 py-2.5 text-base
+    @apply w-full rounded-lg border border-stone-300 bg-surface px-3 py-2.5 text-base
            placeholder:text-stone-400 focus:border-brand-500 focus:outline-none
            focus:ring-2 focus:ring-brand-500/30 read-only:bg-stone-100;
   }
+  .card { @apply rounded-xl bg-surface shadow; }
   .btn-primary { @apply btn bg-brand-600 text-white hover:bg-brand-700; }
+  .btn-accent { @apply btn bg-accent-500 text-white hover:bg-accent-600; }
   .btn-warn { @apply btn bg-amber-500 text-white hover:bg-amber-600; }
   .btn-danger { @apply btn bg-red-600 text-white hover:bg-red-700; }
   .btn-ghost { @apply btn bg-stone-200 text-stone-700 hover:bg-stone-300; }

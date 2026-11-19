@@ -9,6 +9,7 @@
 
   <ItemGroup>
     <PackageReference Include="MongoDB.Driver" Version="3.*" />
+    <PackageReference Include="CloudinaryDotNet" Version="1.*" />
   </ItemGroup>
 
 </Project>

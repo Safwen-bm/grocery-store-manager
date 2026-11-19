@@ -4,8 +4,12 @@ import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
 import ProductDetails from './pages/ProductDetails';
+import Scan from './pages/Scan';
 import Login from './pages/Login';
+import Dashboard from './pages/admin/Dashboard';
 import AdminProducts from './pages/admin/AdminProducts';
+import Stock from './pages/admin/Stock';
+import Finance from './pages/admin/Finance';
 
 function Layout() {
   return (
@@ -33,9 +37,13 @@ export default function App() {
           <Route element={<Layout />}>
             <Route path="/" element={<Home />} />
             <Route path="/product/:id" element={<ProductDetails />} />
+            <Route path="/scan" element={<Scan />} />
             <Route path="/login" element={<Login />} />
             <Route element={<RequireAdmin />}>
+              <Route path="/admin" element={<Dashboard />} />
               <Route path="/admin/products" element={<AdminProducts />} />
+              <Route path="/admin/stock" element={<Stock />} />
+              <Route path="/admin/finance" element={<Finance />} />
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
