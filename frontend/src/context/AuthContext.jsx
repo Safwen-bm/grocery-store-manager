@@ -1,5 +1,5 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { api } from '../lib/api';
+import { createContext, useContext, useEffect, useState } from "react";
+import { api } from "../lib/api";
 
 const AuthContext = createContext(null);
 // eslint-disable-next-line react-refresh/only-export-components
@@ -10,21 +10,26 @@ export function AuthProvider({ children }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    api.get('/auth/me')
+    api
+      .get("/auth/me")
       .then((r) => setUser(r.data))
       .catch(() => setUser(null))
       .finally(() => setLoading(false));
   }, []);
 
   const login = async (username, password) => {
-    const r = await api.post('/auth/login', { username, password });
+    const r = await api.post("/auth/login", { username, password });
     setUser(r.data);
   };
 
   const logout = async () => {
-    await api.post('/auth/logout').catch(() => {});
+    await api.post("/auth/logout").catch(() => {});
     setUser(null);
   };
 
-  return <AuthContext value={{ user, loading, login, logout }}>{children}</AuthContext>;
+  return (
+    <AuthContext value={{ user, loading, login, logout }}>
+      {children}
+    </AuthContext>
+  );
 }

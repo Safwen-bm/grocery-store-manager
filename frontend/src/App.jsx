@@ -1,23 +1,32 @@
-import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
-import AdminLayout from './components/AdminLayout';
-import { AuthProvider, useAuth } from './context/AuthContext';
-import Navbar from './components/Navbar';
-import Footer from './components/Footer';
-import Home from './pages/Home';
-import ProductDetails from './pages/ProductDetails';
-import Scan from './pages/Scan';
-import Login from './pages/Login';
-import Dashboard from './pages/admin/Dashboard';
-import AdminProducts from './pages/admin/AdminProducts';
-import Stock from './pages/admin/Stock';
-import Finance from './pages/admin/Finance';
+import {
+  BrowserRouter,
+  Navigate,
+  Outlet,
+  Route,
+  Routes,
+  useLocation,
+} from "react-router-dom";
+import AdminLayout from "./components/AdminLayout";
+import { AuthProvider, useAuth } from "./context/AuthContext";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import Home from "./pages/Home";
+import ProductDetails from "./pages/ProductDetails";
+import Scan from "./pages/Scan";
+import Login from "./pages/Login";
+import Dashboard from "./pages/admin/Dashboard";
+import AdminProducts from "./pages/admin/AdminProducts";
+import Stock from "./pages/admin/Stock";
+import Finance from "./pages/admin/Finance";
 
 function Layout() {
-  const inAdmin = useLocation().pathname.startsWith('/admin');
+  const inAdmin = useLocation().pathname.startsWith("/admin");
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1 pt-17.5"><Outlet /></main>
+      <main className="flex-1 pt-17.5">
+        <Outlet />
+      </main>
       {!inAdmin && <Footer />}
     </div>
   );
@@ -26,8 +35,10 @@ function Layout() {
 function RequireAdmin() {
   const { user, loading } = useAuth();
   const location = useLocation();
-  if (loading) return <p className="p-10 text-center text-stone-500">جاري التحميل...</p>;
-  if (!user) return <Navigate to="/login" state={{ from: location.pathname }} replace />;
+  if (loading)
+    return <p className="p-10 text-center text-stone-500">جاري التحميل...</p>;
+  if (!user)
+    return <Navigate to="/login" state={{ from: location.pathname }} replace />;
   return <Outlet />;
 }
 

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { api, errorMessage } from './api';
+import { useEffect, useState } from "react";
+import { api, errorMessage } from "./api";
 
 // GET helper: keeps the previous data while a new request loads.
 export function useApi(path, params, enabled = true) {
@@ -10,10 +10,17 @@ export function useApi(path, params, enabled = true) {
   useEffect(() => {
     if (!enabled) return undefined;
     let active = true;
-    api.get(path, { params })
+    api
+      .get(path, { params })
       .then((r) => active && setState({ key, data: r.data }))
-      .catch((e) => active && setState({ key, error: errorMessage(e), status: e.response?.status }));
-    return () => { active = false; };
+      .catch(
+        (e) =>
+          active &&
+          setState({ key, error: errorMessage(e), status: e.response?.status }),
+      );
+    return () => {
+      active = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, enabled]);
 
