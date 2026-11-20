@@ -17,7 +17,7 @@ function Layout() {
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
-      <main className="flex-1 pt-[70px]"><Outlet /></main>
+      <main className="flex-1 pt-17.5"><Outlet /></main>
       {!inAdmin && <Footer />}
     </div>
   );

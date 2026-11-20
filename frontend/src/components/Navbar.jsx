@@ -36,11 +36,11 @@ export default function Navbar() {
 
   return (
     <header className="fixed inset-x-0 top-0 z-50 bg-surface shadow-sm">
-      <nav className="mx-auto flex h-[70px] max-w-6xl items-center justify-between gap-3 px-4">
+      <nav className="mx-auto flex h-17.5 max-w-6xl items-center justify-between gap-3 px-4">
         <Link to="/" onClick={close}><Logo /></Link>
 
         <div
-          className={`${open ? 'flex' : 'hidden'} absolute inset-x-0 top-[70px] flex-col gap-1 bg-surface p-4 shadow-md
+          className={`${open ? 'flex' : 'hidden'} absolute inset-x-0 top-17.5 flex-col gap-1 bg-surface p-4 shadow-md
                       lg:static lg:flex lg:flex-row lg:items-center lg:p-0 lg:shadow-none`}
         >
           <NavLink to="/" end className={link} onClick={close}>الرئيسية</NavLink>

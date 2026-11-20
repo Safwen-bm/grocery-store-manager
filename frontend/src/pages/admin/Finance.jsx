@@ -169,7 +169,7 @@ export default function Finance() {
         <p className="text-sm text-stone-500">المجموع: <b className="text-red-600">{formatPrice(total)}</b></p>
       </div>
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[560px] text-start">
+        <table className="w-full min-w-140 text-start">
           <thead className="bg-stone-100 text-stone-700">
             <tr>{['التاريخ', 'النوع', 'التفاصيل', 'المبلغ', ''].map((h, i) => <th key={i} className="p-3 text-start font-bold">{h}</th>)}</tr>
           </thead>

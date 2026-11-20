@@ -82,7 +82,7 @@ export default function AdminProducts() {
       {(error || list.error) && <p role="alert" className="mb-3 text-red-600">{error || list.error}</p>}
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[900px] text-start">
+        <table className="w-full min-w-225 text-start">
           <thead className="bg-stone-100 text-stone-700">
             <tr>
               {['', 'الاسم', 'الباركود', 'التكلفة', 'البيع', 'عرض', 'الكمية', 'الصنف', 'الانتهاء', ''].map((h, i) => (

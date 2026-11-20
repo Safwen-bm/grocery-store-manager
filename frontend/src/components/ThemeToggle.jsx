@@ -16,7 +16,7 @@ export default function ThemeToggle() {
       className={`relative h-7 w-12 shrink-0 rounded-full transition-colors ${dark ? 'bg-brand-600' : 'bg-stone-300'}`}
     >
       <span
-        className={`absolute start-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow transition-transform ${
+        className={`absolute inset-s-0.5 top-0.5 flex h-6 w-6 items-center justify-center rounded-full bg-white shadow transition-transform ${
           dark ? '-translate-x-5 text-brand-600' : 'text-amber-500'
         }`}
       >

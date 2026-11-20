@@ -33,7 +33,7 @@ export default function Stock() {
       </div>
 
       <div className="card overflow-x-auto">
-        <table className="w-full min-w-[680px] text-start">
+        <table className="w-full min-w-170 text-start">
           <thead className="bg-stone-100 text-stone-700">
             <tr>{['التاريخ', 'المنتج', 'النوع', 'الكمية', 'سعر القطعة', 'المجموع', 'تفاصيل'].map((h) => <th key={h} className="p-3 text-start font-bold">{h}</th>)}</tr>
           </thead>

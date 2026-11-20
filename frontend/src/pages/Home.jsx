@@ -24,7 +24,7 @@ export default function Home() {
 
   return (
     <div>
-      <section className="relative -mt-[70px] h-[85vh] overflow-hidden">
+      <section className="relative -mt-17.5 h-[85vh] overflow-hidden">
         <img src="/home.png" alt="" className="h-full w-full object-cover brightness-60" />
         <div className="absolute inset-0 flex flex-col items-center justify-center px-4 text-center text-white">
           <h1 className="text-4xl font-extrabold drop-shadow-lg md:text-6xl">مرحبًا بكم في سوبريت فايزة</h1>
@@ -76,7 +76,7 @@ export default function Home() {
         <div className="mb-8 flex flex-wrap items-center justify-center gap-3">
           <div className="relative w-64">
             <input className="input pe-10" placeholder="ابحث باسم المنتج أو الشركة" value={search} onChange={(e) => change(setSearch)(e.target.value)} />
-            <span className="pointer-events-none absolute end-3 top-1/2 -translate-y-1/2">🔍</span>
+            <span className="pointer-events-none absolute inset-e-3 top-1/2 -translate-y-1/2">🔍</span>
           </div>
           <select className="input w-48" value={sort} onChange={(e) => change(setSort)(e.target.value)}>
             <option value="name">ترتيب: الاسم</option>

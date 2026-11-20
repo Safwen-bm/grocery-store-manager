@@ -78,6 +78,7 @@ app.Use(async (ctx, next) =>
     h["X-Frame-Options"] = "DENY";
     h["Referrer-Policy"] = "strict-origin-when-cross-origin";
     h["Permissions-Policy"] = "camera=(self), microphone=(), geolocation=()"; // camera = barcode scanner
+    if (ctx.Request.Path.StartsWithSegments("/api")) h["Cache-Control"] = "no-store"; // never cache API answers
     h["Content-Security-Policy"] =
         "default-src 'self'; " +
         "img-src 'self' data: blob: https://res.cloudinary.com; " +

@@ -32,7 +32,7 @@ export default function ProductCard({ product: p }) {
         </span>
       </div>
 
-      <div className="absolute start-3 top-5 flex flex-col items-start gap-1">
+      <div className="absolute inset-s-3 top-5 flex flex-col items-start gap-1">
         {promo && <span className="rounded-md bg-accent-500 px-2 py-1 text-xs font-bold text-white">-{Math.round(p.promoPercent)}%</span>}
         {p.isFeatured && <span className="rounded-md bg-amber-400 px-2 py-1 text-xs font-bold text-stone-900">⭐ مميز</span>}
         {p.stock === 0 ? (

@@ -25,10 +25,10 @@ export default function AdminLayout() {
 
   return (
     <div>
-      {open && <div className="fixed inset-x-0 bottom-0 top-[70px] z-30 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />}
+      {open && <div className="fixed inset-x-0 bottom-0 top-17.5 z-30 bg-black/40 lg:hidden" onClick={() => setOpen(false)} />}
 
       <aside
-        className={`fixed bottom-0 start-0 top-[70px] z-40 flex w-64 flex-col overflow-y-auto border-e border-stone-200 bg-surface p-3 shadow-lg transition-transform duration-300 ${
+        className={`fixed bottom-0 inset-s-0 top-17.5 z-40 flex w-64 flex-col overflow-y-auto border-e border-stone-200 bg-surface p-3 shadow-lg transition-transform duration-300 ${
           open ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
@@ -49,7 +49,7 @@ export default function AdminLayout() {
       </aside>
 
       <div className={`transition-[margin] duration-300 ${open ? 'lg:ms-64' : ''}`}>
-        <div className="sticky top-[70px] z-20 border-b border-stone-200 bg-stone-50/90 px-4 py-2 backdrop-blur">
+        <div className="sticky top-17.5 z-20 border-b border-stone-200 bg-stone-50/90 px-4 py-2 backdrop-blur">
           <button
             onClick={() => setOpen(!open)}
             aria-expanded={open}
