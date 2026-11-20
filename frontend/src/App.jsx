@@ -1,4 +1,5 @@
 import { BrowserRouter, Navigate, Outlet, Route, Routes, useLocation } from 'react-router-dom';
+import AdminLayout from './components/AdminLayout';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
@@ -12,11 +13,12 @@ import Stock from './pages/admin/Stock';
 import Finance from './pages/admin/Finance';
 
 function Layout() {
+  const inAdmin = useLocation().pathname.startsWith('/admin');
   return (
     <div className="flex min-h-screen flex-col">
       <Navbar />
       <main className="flex-1 pt-[70px]"><Outlet /></main>
-      <Footer />
+      {!inAdmin && <Footer />}
     </div>
   );
 }
@@ -40,10 +42,12 @@ export default function App() {
             <Route path="/scan" element={<Scan />} />
             <Route path="/login" element={<Login />} />
             <Route element={<RequireAdmin />}>
-              <Route path="/admin" element={<Dashboard />} />
-              <Route path="/admin/products" element={<AdminProducts />} />
-              <Route path="/admin/stock" element={<Stock />} />
-              <Route path="/admin/finance" element={<Finance />} />
+              <Route element={<AdminLayout />}>
+                <Route path="/admin" element={<Dashboard />} />
+                <Route path="/admin/products" element={<AdminProducts />} />
+                <Route path="/admin/stock" element={<Stock />} />
+                <Route path="/admin/finance" element={<Finance />} />
+              </Route>
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>

@@ -1,9 +1,13 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import Field from '../../components/Field';
+import Icon from '../../components/Icon';
+import MovementForm from '../../components/MovementForm';
 import { api, errorMessage } from '../../lib/api';
 import { formatDate, formatPrice, toInputDate } from '../../lib/format';
 import { useApi } from '../../lib/hooks';
 
-const CATEGORIES = ['إيجار', 'كهرباء وماء', 'أجور', 'نقل', 'صيانة', 'ضرائب', 'أخرى'];
+const CATEGORIES = ['إيجار', 'كهرباء وماء', 'أجور', 'نقل', 'صيانة', 'مستلزمات (أكياس، تنظيف...)', 'ضرائب', 'أخرى'];
 
 function periodRange(key) {
   const today = new Date();
@@ -26,15 +30,18 @@ function Card({ label, value, tone, hint }) {
 
 export default function Finance() {
   const [period, setPeriod] = useState('month');
+  const [tab, setTab] = useState('purchase');
   const range = periodRange(period);
   const summary = useApi('/admin/finance/summary', range);
   const expenses = useApi('/admin/expenses', range);
+  const purchases = useApi('/admin/movements', { type: 'purchase', pageSize: 200, ...range });
   const [form, setForm] = useState({ title: '', category: CATEGORIES[0], amount: '', date: toInputDate(), note: '' });
   const [error, setError] = useState('');
 
   const s = summary.data;
   const set = (e) => setForm((f) => ({ ...f, [e.target.name]: e.target.value }));
   const maxDay = Math.max(1, ...(s?.daily.map((d) => d.revenue) ?? [0]));
+  const refresh = () => { summary.reload(); expenses.reload(); purchases.reload(); };
 
   const addExpense = async (e) => {
     e.preventDefault();
@@ -42,8 +49,7 @@ export default function Finance() {
     try {
       await api.post('/admin/expenses', { ...form, amount: Number(form.amount), note: form.note || null });
       setForm((f) => ({ ...f, title: '', amount: '', note: '' }));
-      summary.reload();
-      expenses.reload();
+      refresh();
     } catch (err) {
       setError(errorMessage(err));
     }
@@ -52,9 +58,22 @@ export default function Finance() {
   const removeExpense = async (id) => {
     if (!window.confirm('حذف هذا المصروف؟')) return;
     await api.delete(`/admin/expenses/${id}`);
-    summary.reload();
-    expenses.reload();
+    refresh();
   };
+
+  // Purchases + expenses in one list, newest first
+  const rows = [
+    ...(purchases.data?.items ?? []).map((m) => ({
+      key: `p${m.id}`, kind: 'purchase', date: m.createdAt, amount: m.total,
+      title: `${m.productName} × ${m.quantity}`,
+      detail: [m.supplier && `المورد: ${m.supplier}`, m.note].filter(Boolean).join(' · '),
+    })),
+    ...(expenses.data ?? []).map((x) => ({
+      key: `e${x.id}`, kind: 'expense', id: x.id, date: x.date, amount: x.amount,
+      title: x.title, detail: [x.category, x.note].filter(Boolean).join(' · '),
+    })),
+  ].sort((a, b) => new Date(b.date) - new Date(a.date));
+  const total = rows.reduce((sum, r) => sum + Number(r.amount), 0);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
@@ -74,14 +93,14 @@ export default function Finance() {
         <>
           <div className="grid gap-4 md:grid-cols-3">
             <Card label="💰 ما كسبته (المبيعات)" value={formatPrice(s.revenue)} tone="text-brand-600" hint="مجموع ما بِعته" />
-            <Card label="💸 ما صرفته" value={formatPrice(s.moneyOut)} tone="text-red-600" hint="شراء بضاعة + مصاريف" />
+            <Card label="💸 ما صرفته" value={formatPrice(s.moneyOut)} tone="text-red-600" hint="مشتريات البضاعة + المصاريف" />
             <Card label="📈 الربح الصافي" value={formatPrice(s.profit)} tone={s.profit >= 0 ? 'text-brand-600' : 'text-red-600'}
               hint="المبيعات − تكلفة ما بِعته − التلف − المصاريف" />
           </div>
 
           <div className="card mt-4 grid gap-2 p-4 text-sm md:grid-cols-4">
             <p>تكلفة ما بِعته: <b>{formatPrice(s.costOfGoods)}</b></p>
-            <p>شراء بضاعة: <b>{formatPrice(s.stockPurchases)}</b></p>
+            <p>مشتريات البضاعة: <b>{formatPrice(s.stockPurchases)}</b></p>
             <p>مصاريف أخرى: <b>{formatPrice(s.expenses)}</b></p>
             <p>خسائر التلف: <b>{formatPrice(s.waste)}</b></p>
           </div>
@@ -105,35 +124,72 @@ export default function Finance() {
         </>
       )}
 
-      <h2 className="mb-3 mt-10 text-2xl font-bold">المصاريف</h2>
-      <form onSubmit={addExpense} className="card grid gap-3 p-5 md:grid-cols-2">
-        <input className="input" name="title" placeholder="الوصف (مثال: فاتورة الكهرباء)" value={form.title} onChange={set} required maxLength={100} />
-        <select className="input" name="category" value={form.category} onChange={set}>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
-        <input className="input" type="number" name="amount" placeholder="المبلغ (د.ت)" value={form.amount} onChange={set} required min="0.01" step="0.01" />
-        <input className="input" type="date" name="date" value={form.date} onChange={set} required />
-        <input className="input md:col-span-2" name="note" placeholder="ملاحظة (اختياري)" value={form.note} onChange={set} maxLength={200} />
-        {error && <p role="alert" className="text-sm text-red-600 md:col-span-2">{error}</p>}
-        <button className="btn-primary md:col-span-2">إضافة مصروف</button>
-      </form>
+      <h2 className="mb-3 mt-10 text-2xl font-bold">المصاريف والمشتريات</h2>
+      <div className="mx-auto mb-4 grid max-w-xl grid-cols-2 gap-2">
+        {[['purchase', 'cart', 'شراء بضاعة'], ['expense', 'receipt', 'مصروف عادي']].map(([k, icon, label]) => (
+          <button key={k} onClick={() => setTab(k)}
+            className={`flex items-center justify-center gap-2 rounded-lg border px-3 py-2.5 font-bold ${tab === k ? 'border-brand-600 bg-brand-600 text-white' : 'border-stone-300 hover:bg-stone-100'}`}>
+            <Icon name={icon} /> {label}
+          </button>
+        ))}
+      </div>
 
-      <div className="card mt-4 overflow-x-auto">
-        <table className="w-full min-w-[520px] text-start">
+      {tab === 'purchase' ? (
+        <>
+          <MovementForm types={['purchase']} submitLabel="تسجيل الشراء" onDone={refresh} />
+          <p className="mt-2 text-center text-sm text-stone-500">
+            الشراء يزيد المخزون تلقائياً ويُحسب كمال مصروف. منتج جديد غير موجود؟{' '}
+            <Link to="/admin/products" className="font-bold text-brand-600">أضفه من صفحة المنتجات</Link>
+          </p>
+        </>
+      ) : (
+        <form onSubmit={addExpense} className="card mx-auto grid max-w-xl gap-3 p-5 md:grid-cols-2">
+          <Field label="الوصف" required className="md:col-span-2" hint="مثال: فاتورة الكهرباء، أجرة العامل، أكياس بلاستيك">
+            <input className="input" name="title" value={form.title} onChange={set} required maxLength={100} />
+          </Field>
+          <Field label="النوع" required>
+            <select className="input" name="category" value={form.category} onChange={set}>{CATEGORIES.map((c) => <option key={c}>{c}</option>)}</select>
+          </Field>
+          <Field label="المبلغ (د.ت)" required>
+            <input className="input" type="number" name="amount" value={form.amount} onChange={set} required min="0.01" step="0.01" />
+          </Field>
+          <Field label="التاريخ" required className="md:col-span-2">
+            <input className="input" type="date" name="date" value={form.date} onChange={set} required />
+          </Field>
+          <Field label="ملاحظة (اختياري)" className="md:col-span-2">
+            <input className="input" name="note" value={form.note} onChange={set} maxLength={200} />
+          </Field>
+          {error && <p role="alert" className="text-sm text-red-600 md:col-span-2">{error}</p>}
+          <button className="btn-primary md:col-span-2">إضافة المصروف</button>
+        </form>
+      )}
+
+      <div className="mb-2 mt-8 flex items-center justify-between">
+        <h3 className="text-xl font-bold">سجل هذه الفترة</h3>
+        <p className="text-sm text-stone-500">المجموع: <b className="text-red-600">{formatPrice(total)}</b></p>
+      </div>
+      <div className="card overflow-x-auto">
+        <table className="w-full min-w-[560px] text-start">
           <thead className="bg-stone-100 text-stone-700">
-            <tr>{['التاريخ', 'الوصف', 'النوع', 'المبلغ', ''].map((h, i) => <th key={i} className="p-3 text-start font-bold">{h}</th>)}</tr>
+            <tr>{['التاريخ', 'النوع', 'التفاصيل', 'المبلغ', ''].map((h, i) => <th key={i} className="p-3 text-start font-bold">{h}</th>)}</tr>
           </thead>
           <tbody>
-            {expenses.data?.map((x) => (
-              <tr key={x.id} className="border-t border-stone-200 text-sm">
-                <td className="p-3">{formatDate(x.date)}</td>
-                <td className="p-3 font-medium">{x.title}<div className="text-xs text-stone-500">{x.note}</div></td>
-                <td className="p-3">{x.category}</td>
-                <td className="p-3 font-bold text-red-600">{formatPrice(x.amount)}</td>
-                <td className="p-3"><button className="text-red-600" onClick={() => removeExpense(x.id)}>حذف</button></td>
+            {rows.map((r) => (
+              <tr key={r.key} className="border-t border-stone-200 text-sm">
+                <td className="p-3">{formatDate(r.date)}</td>
+                <td className="p-3">
+                  <span className={`rounded-full px-2 py-0.5 text-xs font-bold ${r.kind === 'purchase' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'}`}>
+                    {r.kind === 'purchase' ? 'شراء بضاعة' : 'مصروف'}
+                  </span>
+                </td>
+                <td className="p-3 font-medium">{r.title}<div className="text-xs text-stone-500">{r.detail}</div></td>
+                <td className="p-3 font-bold text-red-600">{formatPrice(r.amount)}</td>
+                <td className="p-3">{r.kind === 'expense' && <button className="text-red-600" onClick={() => removeExpense(r.id)}>حذف</button>}</td>
               </tr>
             ))}
           </tbody>
         </table>
-        {expenses.data?.length === 0 && <p className="p-6 text-center text-stone-500">لا توجد مصاريف في هذه الفترة.</p>}
+        {rows.length === 0 && <p className="p-6 text-center text-stone-500">لا توجد مشتريات أو مصاريف في هذه الفترة.</p>}
       </div>
     </div>
   );

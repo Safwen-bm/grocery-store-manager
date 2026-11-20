@@ -19,7 +19,7 @@ public class Product
     public string Company { get; set; } = "";
 
     [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
-    public DateTime ExpiryDate { get; set; }
+    public DateTime? ExpiryDate { get; set; }
 
     [BsonIgnoreIfNull] public string? Barcode { get; set; }
     public string? ImageUrl { get; set; }
@@ -74,6 +74,7 @@ public class StockMovement
     [BsonRepresentation(BsonType.Decimal128)] public decimal Total { get; set; }
 
     public string? Note { get; set; }
+    public string? Supplier { get; set; }
     public string? CreatedBy { get; set; }
 
     [BsonDateTimeOptions(Kind = DateTimeKind.Utc)]
@@ -81,17 +82,17 @@ public class StockMovement
 
     public static StockMovement Create(Product p, string type, int qty, decimal unitPrice,
         decimal unitCost, string? note, string? by) => new()
-    {
-        ProductId = p.Id!,
-        ProductName = p.Name,
-        Type = type,
-        Quantity = qty,
-        UnitPrice = unitPrice,
-        UnitCost = unitCost,
-        Total = type == "adjustment" ? 0 : Math.Round(qty * unitPrice, 2),
-        Note = note,
-        CreatedBy = by,
-    };
+        {
+            ProductId = p.Id!,
+            ProductName = p.Name,
+            Type = type,
+            Quantity = qty,
+            UnitPrice = unitPrice,
+            UnitCost = unitCost,
+            Total = type == "adjustment" ? 0 : Math.Round(qty * unitPrice, 2),
+            Note = note,
+            CreatedBy = by,
+        };
 }
 
 public class Expense
@@ -115,16 +116,16 @@ public class Expense
 // What the public is allowed to see: no cost price, no profit margin.
 public record PublicProductDto(
     string Id, string Name, decimal SellingPrice, decimal FinalPrice, decimal PromoPercent,
-    DateTime? PromoEndsAt, int Stock, string Category, string Company, DateTime ExpiryDate,
+    DateTime? PromoEndsAt, int Stock, string Category, string Company, DateTime? ExpiryDate,
     string? Barcode, string? ImageUrl, bool IsFeatured);
 
 public record ProductRequest(
     string? Name, decimal? CostPrice, decimal? ProfitMargin, int? Stock,
     string? Category, string? Company, DateTime? ExpiryDate, string? Barcode,
     string? ImageUrl, string? ImagePublicId, decimal? PromoPercent, DateTime? PromoEndsAt,
-    bool? IsFeatured);
+    bool? IsFeatured, decimal? SellingPrice);
 
-public record MovementRequest(string? ProductId, string? Type, int? Quantity, decimal? UnitPrice, string? Note);
+public record MovementRequest(string? ProductId, string? Type, int? Quantity, decimal? UnitPrice, string? Note, string? Supplier);
 public record ExpenseRequest(string? Title, string? Category, decimal? Amount, DateTime? Date, string? Note);
 public record LoginRequest(string? Username, string? Password);
 public record Paged<T>(IReadOnlyList<T> Items, long Total, int Page, int PageSize);

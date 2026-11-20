@@ -1,10 +1,11 @@
 export const LOW_STOCK = 10;
-export const formatDate = (d) => new Date(d).toLocaleDateString('fr-TN');
+export const formatDate = (d) => (d ? new Date(d).toLocaleDateString('fr-TN') : '—');
 export const formatDateTime = (d) => new Date(d).toLocaleString('fr-TN', { dateStyle: 'short', timeStyle: 'short' });
 export const formatPrice = (n) => `${Number(n ?? 0).toFixed(2)} د.ت`;
 export const daysUntil = (d) => Math.ceil((new Date(d) - Date.now()) / 86400000);
 
 export function expiryState(d) {
+  if (!d) return 'none';
   const days = daysUntil(d);
   if (days < 0) return 'expired';
   if (days <= 30) return 'soon';

@@ -45,6 +45,7 @@ public static class AdminEndpoints
             if (!ManualTypes.Contains(type)) errors["type"] = ["نوع الحركة غير صالح"];
             if (r.Quantity is null or < 1 or > 1_000_000) errors["quantity"] = ["الكمية غير صالحة"];
             if (r.UnitPrice is < 0) errors["unitPrice"] = ["السعر غير صالح"];
+            if (r.Supplier is { Length: > 100 }) errors["supplier"] = ["اسم المورد طويل جداً"];
             if (r.Note is { Length: > 200 }) errors["note"] = ["الملاحظة طويلة جداً"];
             if (errors.Count > 0) return Results.ValidationProblem(errors);
 
@@ -78,25 +79,32 @@ public static class AdminEndpoints
             var unitPrice = r.UnitPrice ?? (type == "sale" ? p.FinalPrice : p.CostPrice);
             var unitCost = type == "purchase" ? unitPrice : p.CostPrice;
             var movement = StockMovement.Create(p, type, qty, unitPrice, unitCost, r.Note?.Trim(), user.Identity?.Name);
+            movement.Supplier = string.IsNullOrWhiteSpace(r.Supplier) ? null : r.Supplier.Trim();
             await db.Movements.InsertOneAsync(movement);
 
             return Results.Ok(new { movement, stock = updated.Stock });
         });
 
-        admin.MapGet("/movements", async (MongoContext db, string? type, string? productId, int? page, int? pageSize) =>
-        {
-            var fb = Builders<StockMovement>.Filter;
-            var f = fb.Empty;
-            if (!string.IsNullOrEmpty(type)) f &= fb.Eq(m => m.Type, type);
-            if (!string.IsNullOrEmpty(productId) && ObjectId.TryParse(productId, out _)) f &= fb.Eq(m => m.ProductId, productId);
+        admin.MapGet("/movements", async (MongoContext db, string? type, string? productId,
+     DateTime? dateFrom, DateTime? dateTo, int? page, int? pageSize) =>
+ {
+     var fb = Builders<StockMovement>.Filter;
+     var f = fb.Empty;
+     if (!string.IsNullOrEmpty(type)) f &= fb.Eq(m => m.Type, type);
+     if (!string.IsNullOrEmpty(productId) && ObjectId.TryParse(productId, out _)) f &= fb.Eq(m => m.ProductId, productId);
+     if (dateFrom is not null || dateTo is not null)
+     {
+         var (start, end) = Range(dateFrom, dateTo);
+         f &= fb.Gte(m => m.CreatedAt, start) & fb.Lt(m => m.CreatedAt, end);
+     }
 
-            var size = Math.Clamp(pageSize ?? 15, 1, 50);
-            var pg = Math.Max(1, page ?? 1);
-            var total = await db.Movements.CountDocumentsAsync(f);
-            var items = await db.Movements.Find(f).SortByDescending(m => m.CreatedAt)
-                .Skip((pg - 1) * size).Limit(size).ToListAsync();
-            return Results.Ok(new Paged<StockMovement>(items, total, pg, size));
-        });
+     var size = Math.Clamp(pageSize ?? 15, 1, 200);
+     var pg = Math.Max(1, page ?? 1);
+     var total = await db.Movements.CountDocumentsAsync(f);
+     var items = await db.Movements.Find(f).SortByDescending(m => m.CreatedAt)
+         .Skip((pg - 1) * size).Limit(size).ToListAsync();
+     return Results.Ok(new Paged<StockMovement>(items, total, pg, size));
+ });
 
         // ---------- Dashboard ----------
         admin.MapGet("/dashboard", async (MongoContext db) =>

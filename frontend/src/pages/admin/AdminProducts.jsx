@@ -11,10 +11,11 @@ import { EMPTY_FORM, productToForm } from '../../lib/product';
 const PAGE_SIZE = 15;
 
 export default function AdminProducts() {
-  const [params] = useSearchParams();
+  const [params, setParams] = useSearchParams();
   const scanned = params.get('barcode'); // coming from the scan page
   const [editing, setEditing] = useState(null);
   const [formKey, setFormKey] = useState(0);
+  const [carry, setCarry] = useState({}); // keep category + company between two additions
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('');
   const [page, setPage] = useState(1);
@@ -27,8 +28,13 @@ export default function AdminProducts() {
   const resetForm = () => { setEditing(null); setFormKey((k) => k + 1); };
 
   const save = async (data) => {
-    if (editing) await api.put(`/admin/products/${editing.id}`, data);
-    else await api.post('/admin/products', data);
+    if (editing) {
+      await api.put(`/admin/products/${editing.id}`, data);
+    } else {
+      await api.post('/admin/products', data);
+      setCarry({ category: data.category, company: data.company });
+      if (scanned) setParams({}, { replace: true });
+    }
     resetForm();
     list.reload();
   };
@@ -49,7 +55,9 @@ export default function AdminProducts() {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const initial = editing ? productToForm(editing) : scanned ? { ...EMPTY_FORM, barcode: scanned } : undefined;
+  const initial = editing
+    ? productToForm(editing)
+    : { ...EMPTY_FORM, ...carry, barcode: scanned ?? '' };
 
   return (
     <div className="mx-auto max-w-6xl px-4 py-8">

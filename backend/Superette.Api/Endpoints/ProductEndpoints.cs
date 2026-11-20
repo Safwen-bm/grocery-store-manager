@@ -25,7 +25,8 @@ public static class ProductEndpoints
         pub.MapGet("/categories", async (MongoContext db) =>
         {
             var today = DateTime.UtcNow.Date;
-            var cats = await (await db.Products.DistinctAsync(p => p.Category, p => p.ExpiryDate >= today)).ToListAsync();
+            var cats = await (await db.Products.DistinctAsync(
+                p => p.Category, p => p.ExpiryDate == null || p.ExpiryDate >= today)).ToListAsync();
             return Results.Ok(cats.OrderBy(c => c));
         });
 
@@ -139,7 +140,8 @@ public static class ProductEndpoints
             f &= fb.Or(fb.Regex(p => p.Name, re), fb.Regex(p => p.Company, re), fb.Eq(p => p.Barcode, term));
         }
         if (!string.IsNullOrWhiteSpace(category)) f &= fb.Eq(p => p.Category, category);
-        if (publicOnly) f &= fb.Gte(p => p.ExpiryDate, DateTime.UtcNow.Date); // hide expired products from the public
+        if (publicOnly) // hide expired products from the public (products without a date never expire)
+            f &= fb.Or(fb.Eq(p => p.ExpiryDate, null), fb.Gte(p => p.ExpiryDate, DateTime.UtcNow.Date));
         if (featured == true) f &= fb.Eq(p => p.IsFeatured, true);
         if (promo == true)
             f &= fb.Gt(p => p.PromoPercent, 0m) &
@@ -177,17 +179,17 @@ public static class ProductEndpoints
         if (string.IsNullOrWhiteSpace(r.Name) || r.Name.Trim().Length > 120)
             e["name"] = ["اسم المنتج مطلوب (120 حرفًا كحد أقصى)"];
         if (r.CostPrice is null or < 0 or > 1_000_000)
-            e["costPrice"] = ["سعر التكلفة غير صالح"];
+            e["costPrice"] = ["سعر الشراء غير صالح"];
+        if (r.SellingPrice is < 0 or > 1_000_000)
+            e["sellingPrice"] = ["سعر البيع غير صالح"];
         if (r.ProfitMargin is null or < 0 or > 1000)
             e["profitMargin"] = ["نسبة الربح غير صالحة"];
-        if (r.Stock is null or < 0 or > 1_000_000)
+        if (r.Stock is < 0 or > 1_000_000)
             e["stock"] = ["الكمية غير صالحة"];
         if (string.IsNullOrWhiteSpace(r.Category) || r.Category.Trim().Length > 60)
             e["category"] = ["الصنف مطلوب (60 حرفًا كحد أقصى)"];
-        if (string.IsNullOrWhiteSpace(r.Company) || r.Company.Trim().Length > 60)
-            e["company"] = ["اسم الشركة مطلوب (60 حرفًا كحد أقصى)"];
-        if (r.ExpiryDate is null)
-            e["expiryDate"] = ["تاريخ الانتهاء مطلوب"];
+        if (r.Company is { Length: > 60 })
+            e["company"] = ["اسم الشركة طويل جدًا"];
         if (!string.IsNullOrWhiteSpace(r.Barcode) && !Regex.IsMatch(r.Barcode.Trim(), @"^[A-Za-z0-9\-]{4,40}$"))
             e["barcode"] = ["الباركود غير صالح (أرقام وحروف فقط)"];
         if (r.PromoPercent is < 0 or > 90)
@@ -204,20 +206,22 @@ public static class ProductEndpoints
         p.Name = r.Name!.Trim();
         p.CostPrice = r.CostPrice!.Value;
         p.ProfitMargin = r.ProfitMargin!.Value;
-        // The server is the source of truth for the price, never the browser.
-        p.SellingPrice = Math.Round(p.CostPrice * (1 + p.ProfitMargin / 100), 2);
-        p.Stock = r.Stock!.Value;
+        // The admin may type the selling price directly; otherwise it is cost + margin.
+        p.SellingPrice = r.SellingPrice is { } sp
+            ? Math.Round(sp, 2)
+            : Math.Round(p.CostPrice * (1 + p.ProfitMargin / 100), 2);
+        p.Stock = r.Stock ?? 0;
         p.Category = r.Category!.Trim();
-        p.Company = r.Company!.Trim();
-        p.ExpiryDate = DateTime.SpecifyKind(r.ExpiryDate!.Value.Date, DateTimeKind.Utc);
+        p.Company = r.Company?.Trim() ?? "";
+        p.ExpiryDate = r.ExpiryDate is null ? null : DateTime.SpecifyKind(r.ExpiryDate.Value.Date, DateTimeKind.Utc);
         p.Barcode = string.IsNullOrWhiteSpace(r.Barcode) ? null : r.Barcode.Trim();
         p.PromoPercent = r.PromoPercent ?? 0;
         p.PromoEndsAt = r.PromoEndsAt is null ? null : DateTime.SpecifyKind(r.PromoEndsAt.Value.Date, DateTimeKind.Utc);
         p.IsFeatured = r.IsFeatured ?? false;
-        if (!string.IsNullOrEmpty(r.ImageUrl))
+        if (r.ImageUrl is not null) // null = keep the current image, "" = remove it
         {
-            p.ImageUrl = r.ImageUrl;
-            p.ImagePublicId = r.ImagePublicId;
+            p.ImageUrl = r.ImageUrl == "" ? null : r.ImageUrl;
+            p.ImagePublicId = r.ImageUrl == "" ? null : r.ImagePublicId;
         }
         p.UpdatedAt = DateTime.UtcNow;
     }
